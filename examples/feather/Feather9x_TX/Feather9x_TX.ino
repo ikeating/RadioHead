@@ -1,4 +1,3 @@
-//Isaiah Keating
 
 // Feather9x_TX
 // -*- mode: C++ -*-
@@ -11,35 +10,12 @@
 #include <SPI.h>
 #include <RH_RF95.h>
 
-/* for feather32u4 
+/* for feather32u4 */
 #define RFM95_CS 8
 #define RFM95_RST 4
 #define RFM95_INT 7
-*/
 
-/* for feather m0  
-#define RFM95_CS 8
-#define RFM95_RST 4
-#define RFM95_INT 3
-*/
-
-/* for shield 
-#define RFM95_CS 10
-#define RFM95_RST 9
-#define RFM95_INT 7
-*/
-
-/* Feather 32u4 w/wing
-#define RFM95_RST     11   // "A"
-#define RFM95_CS      10   // "B"
-#define RFM95_INT     2    // "SDA" (only SDA/SCL/RX/TX have IRQ!)
-*/
-
-/* Feather m0 w/wing 
-#define RFM95_RST     11   // "A"
-#define RFM95_CS      10   // "B"
-#define RFM95_INT     6    // "D"
-*/
+int sensorPin = 0;
 
 #if defined(ESP8266)
   /* for ESP w/featherwing */ 
@@ -68,18 +44,21 @@
 
 
 // Change to 434.0 or other frequency, must match RX's freq!
-#define RF95_FREQ 915.0
+#define RF95_FREQ 433.0
 
 // Singleton instance of the radio driver
 RH_RF95 rf95(RFM95_CS, RFM95_INT);
+
+// Blink on transmit
+#define LED 13
 
 void setup() 
 {
   pinMode(RFM95_RST, OUTPUT);
   digitalWrite(RFM95_RST, HIGH);
 
-  Serial.begin(115200);
-  while (!Serial) {
+  Serial.begin(9600);
+  {
     delay(1);
   }
 
@@ -118,21 +97,43 @@ int16_t packetnum = 0;  // packet counter, we increment per xmission
 
 void loop()
 {
+     //getting the voltage reading from the temperature sensor
+     int reading = analogRead(A0);  
+     
+     // converting that reading to voltage, for 3.3v arduino use 3.3
+     float voltage = reading * 3.3;
+     voltage /= 1024.0; 
+
+     
+     // now print out the temperature
+     float temperatureC = (voltage - 0.5) * 100 ;  //converting from 10 mv per degree wit 500 mV offset
+                                                   //to degrees ((voltage - 500mV) times 100)
+     
+     
+     // now convert to Fahrenheit
+     float temperatureF = (temperatureC * 9.0 / 5.0) + 32.0;
+     
+  
+  digitalWrite(LED, HIGH);
   delay(1000); // Wait 1 second between transmits, could also 'sleep' here!
   Serial.println("Transmitting..."); // Send a message to rf95_server
   
-  char radiopacket[20] = "Hello World #      ";
-  itoa(packetnum++, radiopacket+13, 10);
+  char radiopacket[6];
+  //itoa(packetnum++, radiopacket+9, 10);
+  dtostrf(temperatureF,5,2,radiopacket);
   Serial.print("Sending "); Serial.println(radiopacket);
-  radiopacket[19] = 0;
+  radiopacket[6] = NULL;
+
+  digitalWrite(LED, LOW);
   
   Serial.println("Sending...");
   delay(10);
-  rf95.send((uint8_t *)radiopacket, 20);
+  rf95.send((uint8_t *)radiopacket, 6);
 
   Serial.println("Waiting for packet to complete..."); 
   delay(10);
   rf95.waitPacketSent();
+  
   // Now wait for a reply
   uint8_t buf[RH_RF95_MAX_MESSAGE_LEN];
   uint8_t len = sizeof(buf);
