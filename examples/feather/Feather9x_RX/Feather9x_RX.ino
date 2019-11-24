@@ -9,35 +9,10 @@
 #include <SPI.h>
 #include <RH_RF95.h>
 
-/* for Feather32u4 RFM9x
+/* for Feather32u4 RFM9x */
 #define RFM95_CS 8
 #define RFM95_RST 4
 #define RFM95_INT 7
-*/
-
-/* for feather m0 RFM9x
-#define RFM95_CS 8
-#define RFM95_RST 4
-#define RFM95_INT 3
-*/
-
-/* for shield 
-#define RFM95_CS 10
-#define RFM95_RST 9
-#define RFM95_INT 7
-*/
-
-/* Feather 32u4 w/wing
-#define RFM95_RST     11   // "A"
-#define RFM95_CS      10   // "B"
-#define RFM95_INT     2    // "SDA" (only SDA/SCL/RX/TX have IRQ!)
-*/
-
-/* Feather m0 w/wing 
-#define RFM95_RST     11   // "A"
-#define RFM95_CS      10   // "B"
-#define RFM95_INT     6    // "D"
-*/
 
 #if defined(ESP8266)
   /* for ESP w/featherwing */ 
@@ -66,7 +41,7 @@
 
 
 // Change to 434.0 or other frequency, must match RX's freq!
-#define RF95_FREQ 915.0
+#define RF95_FREQ 433.0
 
 // Singleton instance of the radio driver
 RH_RF95 rf95(RFM95_CS, RFM95_INT);
@@ -80,8 +55,8 @@ void setup()
   pinMode(RFM95_RST, OUTPUT);
   digitalWrite(RFM95_RST, HIGH);
 
-  Serial.begin(115200);
-  while (!Serial) {
+  Serial.begin(9600);
+  {
     delay(1);
   }
   delay(100);
@@ -133,7 +108,7 @@ void loop()
       Serial.println(rf95.lastRssi(), DEC);
 
       // Send a reply
-      uint8_t data[] = "And hello back to you";
+      uint8_t data[] = "Data Recieved";
       rf95.send(data, sizeof(data));
       rf95.waitPacketSent();
       Serial.println("Sent a reply");
